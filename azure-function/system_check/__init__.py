@@ -1,0 +1,57 @@
+import logging
+import azure.functions as func
+import os
+import sys
+
+# Log system path info
+def log_sys_info():
+    logging.info("Python version: %s", sys.version)
+    logging.info("Python path: %s", sys.path)
+    logging.info("Current directory: %s", os.getcwd())
+    logging.info("Directory contents: %s", os.listdir('.'))
+    
+    # Check for .python_packages
+    packages_dir = os.path.join(os.getcwd(), '.python_packages')
+    if os.path.exists(packages_dir):
+        logging.info(".python_packages exists: %s", os.listdir(packages_dir))
+        site_packages = os.path.join(packages_dir, 'lib', 'site-packages')
+        if os.path.exists(site_packages):
+            logging.info("site-packages exists: %s", os.listdir(site_packages))
+    else:
+        logging.info(".python_packages does not exist")
+
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Python HTTP trigger function processed a request.')
+    
+    log_sys_info()
+
+    # Try importing different modules to debug
+    modules_to_try = [
+        'azure.functions', 
+        'openai', 
+        'requests', 
+        'json', 
+        'os',
+        'sys'
+    ]
+    
+    results = {}
+    for module_name in modules_to_try:
+        try:
+            __import__(module_name)
+            results[module_name] = "Success"
+        except ImportError as e:
+            results[module_name] = f"Failed: {str(e)}"
+
+    response_body = {
+        "status": "System Check",
+        "python_version": sys.version,
+        "module_checks": results
+    }
+    
+    import json
+    return func.HttpResponse(
+        json.dumps(response_body),
+        mimetype="application/json",
+        status_code=200
+    )
