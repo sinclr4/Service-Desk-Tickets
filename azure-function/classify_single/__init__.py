@@ -1,8 +1,20 @@
 import logging
 import azure.functions as func
 import json
-from openai import AzureOpenAI
 import os
+import sys
+
+# Add the site-packages to the path if needed
+site_packages_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+                                  '.python_packages', 'lib', 'site-packages')
+if os.path.exists(site_packages_path) and site_packages_path not in sys.path:
+    sys.path.append(site_packages_path)
+
+try:
+    from openai import AzureOpenAI
+except ImportError:
+    logging.error("Failed to import OpenAI. Path: %s", sys.path)
+    raise
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request for single classification.')
