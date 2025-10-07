@@ -24,10 +24,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt --target=".python_packages/lib/site-packages"
         
-    - name: 'Login to Azure'
-      uses: azure/login@v1
+    - name: Login to Azure
+      uses: azure/login@v2
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B07777A688B04423A8A40EFBCCF0F827 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CEBCBA1FC7374583AF23B4624EC7509E }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B606071D85634724BA425A13E74B03C9 }}
         
     - name: 'Deploy Azure Function'
       uses: Azure/functions-action@v1
