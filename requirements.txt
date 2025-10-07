@@ -1,4 +1,9 @@
 # Requirements for Service Desk Tickets project
-openai>=1.0.0
-configparser
-azure-functions
+openai==1.12.0
+configparser==6.0.0
+azure-functions==1.17.0
+python-dateutil>=2.8.2
+aiohttp>=3.8.0
+certifi>=2023.7.22
+tqdm>=4.65.0
+typing-extensions>=4.7.1
