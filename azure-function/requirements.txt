@@ -1,3 +1,4 @@
-# requirements.txt for Azure Function
-azure-functions
+# Requirements for Service Desk Tickets project
 openai>=1.0.0
+configparser
+azure-functions
