@@ -1,0 +1,4 @@
+# Requirements for Service Desk Tickets project
+openai>=1.0.0
+configparser
+azure-functions
