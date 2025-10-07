@@ -1,0 +1,3 @@
+# requirements.txt for Azure Function
+azure-functions
+openai>=1.0.0
