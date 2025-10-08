@@ -1,6 +1,6 @@
 # Requirements for Azure Function - Fixed versions for consistent deployment
 # Using pure Python packages where possible to avoid build issues
-openai==0.28.1  # Using older version that doesn't rely on aiohttp
+openai>=1.0.0  # Using newer version with AzureOpenAI class
 azure-functions==1.17.0
 python-dateutil==2.8.2
 requests==2.31.0

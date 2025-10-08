@@ -14,7 +14,7 @@ if os.path.exists(site_packages_path) and site_packages_path not in sys.path:
     sys.path.append(site_packages_path)
 
 try:
-    import openai
+    from openai import AzureOpenAI
 except ImportError:
     logging.error("Failed to import OpenAI. Path: %s", sys.path)
     raise
@@ -62,14 +62,16 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
         logging.info(f"Endpoint: {os.environ.get('OPENAI_ENDPOINT')}")
         logging.info(f"Model: {os.environ.get('OPENAI_MODEL')}")
         
-        # Create Azure OpenAI client (removed timeout parameter)
+        # Create Azure OpenAI client using the new SDK
         api_key = os.environ["OPENAI_API_KEY"]
         api_version = os.environ["OPENAI_API_VERSION"]
         azure_endpoint = os.environ["OPENAI_ENDPOINT"]
-        openai.api_type = "azure"
-        openai.api_key = api_key
-        openai.api_version = api_version
-        openai.api_base = azure_endpoint
+        
+        client = AzureOpenAI(
+            api_key=api_key,
+            api_version=api_version,
+            azure_endpoint=azure_endpoint
+        )
         
         # Process the CSV
         input_stream = io.StringIO(csv_content)
@@ -105,8 +107,8 @@ Category:
 """
                 try:
                     deployment_id = os.environ.get("OPENAI_MODEL", "gpt-4o")
-                    response = openai.ChatCompletion.create(
-                        engine=deployment_id,
+                    response = client.chat.completions.create(
+                        model=deployment_id,
                         messages=[
                             {"role": "system", "content": system_message},
                             {"role": "user", "content": ticket_prompt}
@@ -114,7 +116,7 @@ Category:
                         temperature=0.3,
                         max_tokens=500,
                     )
-                    category = response.choices[0].message['content'].strip()
+                    category = response.choices[0].message.content.strip()
                 except Exception as e:
                     logging.error(f"Error classifying ticket: {str(e)}")
                     category = "Classification Error"
