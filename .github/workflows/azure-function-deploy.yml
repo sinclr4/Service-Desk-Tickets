@@ -1,112 +1,58 @@
-name: Deploy Azure Functionname: Deploy Azure Function
+name: Deploy Azure Function
 
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Checkout GitHub Action'
+      uses: actions/checkout@v3
 
-on:on:
-
-  push:  push:
-
-    branches: [ main ]    branches: [ main ]
-
-  workflow_dispatch:  workflow_dispatch:
-
-
-
-jobs:jobs:
-
-  build-and-deploy:  build-and-deploy:
-
-    runs-on: ubuntu-latest    runs-on: ubuntu-latest
-
-    steps:    steps:
-
-    - name: 'Checkout GitHub Action'    - name: 'Checkout GitHub Action'
-
-      uses: actions/checkout@v3      uses: actions/checkout@v3
-
-
-
-    - name: Setup Python    - name: Setup Python
-
-      uses: actions/setup-python@v4      uses: actions/setup-python@v4
-
-      with:      with:
-
-        python-version: '3.12'        python-version: '3.12'
-
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: 'Prepare Function App'
+      run: |
+        cd azure-function
         
-
-    - name: 'Prepare Function App'    - name: 'Prepare Function App'
-
-      run: |      run: |
-
-        cd azure-function        cd azure-function
-
-                mkdir -p .python_packages/lib/site-packages
-
-        # Create directory for dependencies        python -m pip install --upgrade pip
-
-        mkdir -p .python_packages/lib/site-packages        pip install -r requirements.txt --target=".python_packages/lib/site-packages"
-
-                
-
-        # Upgrade pip    - name: Login to Azure
-
-        python -m pip install --upgrade pip      uses: azure/login@v2
-
-              with:
-
-        # Install core dependencies directly to site-packages          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B07777A688B04423A8A40EFBCCF0F827 }}
-
-        pip install openai==1.12.0 --target=".python_packages/lib/site-packages"          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CEBCBA1FC7374583AF23B4624EC7509E }}
-
-        pip install azure-functions==1.17.0 --target=".python_packages/lib/site-packages"          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B606071D85634724BA425A13E74B03C9 }}
-
-        pip install requests==2.31.0 --target=".python_packages/lib/site-packages"        
-
-            - name: 'Deploy Azure Function'
-
-        # Install remaining dependencies from requirements.txt      uses: Azure/functions-action@v1
-
-        pip install -r requirements.txt --target=".python_packages/lib/site-packages"      with:
-
-                app-name: ${{ secrets.AZURE_FUNCTION_APP_NAME }}
-
-        # Log installed packages for debugging        package: ./azure-function
-
-        echo "Listing installed packages in site-packages:"        
-
-        ls -la .python_packages/lib/site-packages    - name: 'Configure Azure Function App settings'
-
-              run: |
-
-    - name: Login to Azure        az functionapp config appsettings set --name ${{ secrets.AZURE_FUNCTION_APP_NAME }} \
-
-      uses: azure/login@v2        --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-
-      with:        --settings \
-
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B07777A688B04423A8A40EFBCCF0F827 }}        "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" \
-
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CEBCBA1FC7374583AF23B4624EC7509E }}        "OPENAI_API_VERSION=${{ secrets.OPENAI_API_VERSION }}" \
-
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B606071D85634724BA425A13E74B03C9 }}        "OPENAI_ENDPOINT=${{ secrets.OPENAI_ENDPOINT }}" \
-
-                "OPENAI_MODEL=${{ secrets.OPENAI_MODEL }}"
-
-    - name: 'Deploy Azure Function'        
-
-      uses: Azure/functions-action@v1    - name: 'Set Python Version to 3.12'
-
-      with:      run: |
-
-        app-name: ${{ secrets.AZURE_FUNCTION_APP_NAME }}        az functionapp config appsettings set --name ${{ secrets.AZURE_FUNCTION_APP_NAME }} \
-
-        package: ./azure-function        --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-
-                --settings \
-
-    - name: 'Configure Azure Function App settings'        "PYTHON_VERSION=3.12"
+        # Create directory for dependencies
+        mkdir -p .python_packages/lib/site-packages
+        
+        # Upgrade pip
+        python -m pip install --upgrade pip
+        
+        # Install core dependencies directly to site-packages
+        pip install openai==1.12.0 --target=".python_packages/lib/site-packages"
+        pip install azure-functions==1.17.0 --target=".python_packages/lib/site-packages"
+        pip install requests==2.31.0 --target=".python_packages/lib/site-packages"
+        
+        # Install remaining dependencies from requirements.txt
+        pip install -r requirements.txt --target=".python_packages/lib/site-packages"
+        
+        # Log installed packages for debugging
+        echo "Listing installed packages in site-packages:"
+        ls -la .python_packages/lib/site-packages
+        
+    - name: Login to Azure
+      uses: azure/login@v2
+      with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B07777A688B04423A8A40EFBCCF0F827 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CEBCBA1FC7374583AF23B4624EC7509E }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B606071D85634724BA425A13E74B03C9 }}
+          
+    - name: 'Deploy Azure Function'
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ secrets.AZURE_FUNCTION_APP_NAME }}
+        package: ./azure-function
+        
+    - name: 'Configure Azure Function App settings'
       run: |
         az functionapp config appsettings set --name ${{ secrets.AZURE_FUNCTION_APP_NAME }} \
         --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
