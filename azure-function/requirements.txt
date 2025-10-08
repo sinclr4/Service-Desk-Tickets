@@ -4,6 +4,7 @@ openai>=1.0.0  # Using newer version with AzureOpenAI class
 azure-functions==1.17.0
 python-dateutil==2.8.2
 requests==2.31.0
+httpx==0.25.0  # Added for custom HTTP client
 certifi==2023.11.17
 tqdm==4.66.1
 typing-extensions==4.8.0

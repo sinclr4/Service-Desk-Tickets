@@ -66,10 +66,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info(f"Model: {os.environ.get('OPENAI_MODEL')}")
         
         # Create Azure OpenAI client using the new SDK
+        import httpx
+        
+        # Create a custom HTTP client with no proxies
+        http_client = httpx.Client(proxies=None)
+        
         client = AzureOpenAI(
             api_key=os.environ["OPENAI_API_KEY"],
             api_version=os.environ["OPENAI_API_VERSION"],
-            azure_endpoint=os.environ["OPENAI_ENDPOINT"]
+            azure_endpoint=os.environ["OPENAI_ENDPOINT"],
+            default_headers={"Accept": "application/json"},
+            http_client=http_client
         )
         
         description = req_body['description']
@@ -95,6 +102,10 @@ Category:
             category = response.choices[0].message.content.strip()
         except Exception as e:
             logging.error(f"Error classifying ticket: {str(e)}")
+            logging.error(f"Error type: {type(e).__name__}")
+            # Log additional details if it's a proxies error
+            if "proxies" in str(e).lower():
+                logging.error("This appears to be a proxies-related error. Make sure no proxy settings are conflicting.")
             category = "Classification Error"
         
         # Return the category
