@@ -39,10 +39,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     results = {}
     for module_name in modules_to_try:
         try:
-            __import__(module_name)
-            results[module_name] = "Success"
+            module = __import__(module_name)
+            if module_name == 'openai':
+                results[module_name] = f"Success - Version {module.__version__}"
+            else:
+                results[module_name] = "Success"
         except ImportError as e:
             results[module_name] = f"Failed: {str(e)}"
+        except AttributeError as e:
+            results[module_name] = f"Success (no __version__)"
 
     response_body = {
         "status": "System Check",

@@ -11,7 +11,7 @@ if os.path.exists(site_packages_path) and site_packages_path not in sys.path:
     sys.path.append(site_packages_path)
 
 try:
-    from openai import AzureOpenAI
+    import openai
 except ImportError:
     logging.error("Failed to import OpenAI. Path: %s", sys.path)
     raise
@@ -65,12 +65,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info(f"Endpoint: {os.environ.get('OPENAI_ENDPOINT')}")
         logging.info(f"Model: {os.environ.get('OPENAI_MODEL')}")
         
-        # Create Azure OpenAI client (removed timeout parameter)
-        client = AzureOpenAI(
-            api_key=os.environ["OPENAI_API_KEY"],
-            api_version=os.environ["OPENAI_API_VERSION"],
-            azure_endpoint=os.environ["OPENAI_ENDPOINT"]
-        )
+        # Create Azure OpenAI client using older SDK
+        openai.api_type = "azure"
+        openai.api_key = os.environ["OPENAI_API_KEY"]
+        openai.api_version = os.environ["OPENAI_API_VERSION"]
+        openai.api_base = os.environ["OPENAI_ENDPOINT"]
         
         description = req_body['description']
         
@@ -85,13 +84,14 @@ Ticket Description:
 Category:
 """
         try:
-            response = client.chat.completions.create(
-                model=os.environ["OPENAI_MODEL"],
+            deployment_id = os.environ.get("OPENAI_MODEL", "gpt-4o")
+            response = openai.ChatCompletion.create(
+                engine=deployment_id,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=20,
                 temperature=0
             )
-            category = response.choices[0].message.content.strip()
+            category = response.choices[0].message['content'].strip()
         except Exception as e:
             logging.error(f"Error classifying ticket: {str(e)}")
             category = "Classification Error"

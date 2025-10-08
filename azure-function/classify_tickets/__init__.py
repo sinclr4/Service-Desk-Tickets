@@ -14,7 +14,7 @@ if os.path.exists(site_packages_path) and site_packages_path not in sys.path:
     sys.path.append(site_packages_path)
 
 try:
-    from openai import AzureOpenAI
+    import openai
 except ImportError:
     logging.error("Failed to import OpenAI. Path: %s", sys.path)
     raise
@@ -63,11 +63,13 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
         logging.info(f"Model: {os.environ.get('OPENAI_MODEL')}")
         
         # Create Azure OpenAI client (removed timeout parameter)
-        client = AzureOpenAI(
-            api_key=os.environ["OPENAI_API_KEY"],
-            api_version=os.environ["OPENAI_API_VERSION"],
-            azure_endpoint=os.environ["OPENAI_ENDPOINT"]
-        )
+        api_key = os.environ["OPENAI_API_KEY"]
+        api_version = os.environ["OPENAI_API_VERSION"]
+        azure_endpoint = os.environ["OPENAI_ENDPOINT"]
+        openai.api_type = "azure"
+        openai.api_key = api_key
+        openai.api_version = api_version
+        openai.api_base = azure_endpoint
         
         # Process the CSV
         input_stream = io.StringIO(csv_content)
@@ -91,7 +93,8 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
             description = row.get('Description', '')
             if description:
                 # Classify the ticket
-                prompt = f"""
+                system_message = "You are a helpful assistant that classifies service desk tickets into predefined categories."
+                ticket_prompt = f"""
 Classify the following service desk ticket into one of these categories:
 {', '.join(CATEGORIES)}
 
@@ -101,13 +104,17 @@ Ticket Description:
 Category:
 """
                 try:
-                    response = client.chat.completions.create(
-                        model=os.environ["OPENAI_MODEL"],
-                        messages=[{"role": "user", "content": prompt}],
-                        max_tokens=20,
-                        temperature=0
+                    deployment_id = os.environ.get("OPENAI_MODEL", "gpt-4o")
+                    response = openai.ChatCompletion.create(
+                        engine=deployment_id,
+                        messages=[
+                            {"role": "system", "content": system_message},
+                            {"role": "user", "content": ticket_prompt}
+                        ],
+                        temperature=0.3,
+                        max_tokens=500,
                     )
-                    category = response.choices[0].message.content.strip()
+                    category = response.choices[0].message['content'].strip()
                 except Exception as e:
                     logging.error(f"Error classifying ticket: {str(e)}")
                     category = "Classification Error"

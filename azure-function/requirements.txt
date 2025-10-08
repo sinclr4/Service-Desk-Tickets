@@ -1,11 +1,13 @@
 # Requirements for Azure Function - Fixed versions for consistent deployment
-openai==1.6.1  # Downgraded to a known compatible version for Azure Functions
+# Using pure Python packages where possible to avoid build issues
+openai==0.28.1  # Using older version that doesn't rely on aiohttp
 azure-functions==1.17.0
 python-dateutil==2.8.2
-aiohttp==3.8.5  # Compatible with Python 3.12
+requests==2.31.0
 certifi==2023.11.17
 tqdm==4.66.1
 typing-extensions==4.8.0
-requests==2.31.0
 charset-normalizer==3.3.2
 idna==3.6
+urllib3==2.0.7  # Added for OpenAI compatibility
+# Removed aiohttp to avoid build issues
