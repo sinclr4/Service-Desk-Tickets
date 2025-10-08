@@ -57,12 +57,16 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
         # Get the CSV file content
         csv_content = req.get_body().decode('utf-8')
         
-        # Create Azure OpenAI client
+        # Log environment variables for debugging (hiding API key)
+        logging.info(f"API Version: {os.environ.get('OPENAI_API_VERSION')}")
+        logging.info(f"Endpoint: {os.environ.get('OPENAI_ENDPOINT')}")
+        logging.info(f"Model: {os.environ.get('OPENAI_MODEL')}")
+        
+        # Create Azure OpenAI client (removed timeout parameter)
         client = AzureOpenAI(
             api_key=os.environ["OPENAI_API_KEY"],
             api_version=os.environ["OPENAI_API_VERSION"],
-            azure_endpoint=os.environ["OPENAI_ENDPOINT"],
-            timeout=30.0
+            azure_endpoint=os.environ["OPENAI_ENDPOINT"]
         )
         
         # Process the CSV

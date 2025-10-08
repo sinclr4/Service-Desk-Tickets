@@ -60,12 +60,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 status_code=400
             )
         
-        # Create Azure OpenAI client
+        # Log environment variables for debugging (hiding API key)
+        logging.info(f"API Version: {os.environ.get('OPENAI_API_VERSION')}")
+        logging.info(f"Endpoint: {os.environ.get('OPENAI_ENDPOINT')}")
+        logging.info(f"Model: {os.environ.get('OPENAI_MODEL')}")
+        
+        # Create Azure OpenAI client (removed timeout parameter)
         client = AzureOpenAI(
             api_key=os.environ["OPENAI_API_KEY"],
             api_version=os.environ["OPENAI_API_VERSION"],
-            azure_endpoint=os.environ["OPENAI_ENDPOINT"],
-            timeout=30.0
+            azure_endpoint=os.environ["OPENAI_ENDPOINT"]
         )
         
         description = req_body['description']
