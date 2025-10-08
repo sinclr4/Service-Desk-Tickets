@@ -50,6 +50,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except AttributeError as e:
             results[module_name] = f"Success (no __version__)"
 
+    # Test OpenAI library configuration
+    openai_test = "Not tested"
+    try:
+        import openai
+        openai_test = f"OpenAI version: {openai.__version__}"
+        
+        # Test if this is the old or new API style
+        if hasattr(openai, 'ChatCompletion'):
+            openai_test += " (Old API style - 0.x)"
+        elif hasattr(openai, 'OpenAI') or hasattr(openai, 'AzureOpenAI'):
+            openai_test += " (New API style - 1.x)"
+        else:
+            openai_test += " (Unknown API style)"
+    except ImportError:
+        openai_test = "OpenAI not available"
+        
     # Test httpx Client with proxies parameter
     httpx_proxies_test = "Not tested"
     try:
@@ -57,9 +73,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         try:
             # Try to create a client with proxies parameter
             client = httpx.Client(proxies=None)
-            httpx_proxies_test = "Supports proxies=None"
+            httpx_proxies_test = f"Supports proxies=None (version {httpx.__version__})"
         except TypeError as e:
-            httpx_proxies_test = f"Error: {str(e)}"
+            httpx_proxies_test = f"Error: {str(e)} (version {httpx.__version__})"
     except ImportError:
         httpx_proxies_test = "httpx not available"
     
@@ -67,6 +83,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "status": "System Check",
         "python_version": sys.version,
         "module_checks": results,
+        "openai_test": openai_test,
         "httpx_proxies_test": httpx_proxies_test
     }
     

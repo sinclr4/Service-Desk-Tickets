@@ -14,7 +14,7 @@ if os.path.exists(site_packages_path) and site_packages_path not in sys.path:
     sys.path.append(site_packages_path)
 
 try:
-    from openai import AzureOpenAI
+    import openai
 except ImportError:
     logging.error("Failed to import OpenAI. Path: %s", sys.path)
     raise
@@ -82,16 +82,15 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
         api_version = os.environ["OPENAI_API_VERSION"]
         azure_endpoint = os.environ["OPENAI_ENDPOINT"]
         
-        # Initialize client with default_headers but no other customization
-        # Using the default HTTP client now that we've pinned httpx to a compatible version
+        # Configure openai with Azure settings (using the older API style for version 0.28.1)
         try:
-            # Remove default_headers to simplify the initialization
-            client = AzureOpenAI(
-                api_key=api_key,
-                api_version=api_version,
-                azure_endpoint=azure_endpoint
-            )
-            # Test the client with a simple API call
+            # Set up the client using global configuration
+            openai.api_type = "azure"
+            openai.api_key = api_key
+            openai.api_version = api_version
+            openai.api_base = azure_endpoint
+            
+            # Test the client initialization
             logging.info("Testing OpenAI client initialization...")
         except Exception as e:
             logging.error(f"Error initializing OpenAI client: {str(e)}")
@@ -131,8 +130,9 @@ Category:
 """
                 try:
                     deployment_id = os.environ.get("OPENAI_MODEL", "gpt-4o")
-                    response = client.chat.completions.create(
-                        model=deployment_id,
+                    # Using the older API style for version 0.28.1
+                    response = openai.ChatCompletion.create(
+                        engine=deployment_id,  # In 0.28.1 for Azure, use 'engine' instead of 'model'
                         messages=[
                             {"role": "system", "content": system_message},
                             {"role": "user", "content": ticket_prompt}
@@ -140,7 +140,8 @@ Category:
                         temperature=0.3,
                         max_tokens=500,
                     )
-                    category = response.choices[0].message.content.strip()
+                    # In 0.28.1, message content is accessed differently
+                    category = response.choices[0].message['content'].strip()
                 except Exception as e:
                     logging.error(f"Error classifying ticket: {str(e)}")
                     logging.error(f"Error type: {type(e).__name__}")

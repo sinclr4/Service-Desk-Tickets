@@ -1,7 +1,6 @@
 # Requirements for Azure Function - Fixed versions for consistent deployment
 # Using pure Python packages where possible to avoid build issues
-openai==1.3.5  # Using a specific version to avoid compatibility issues
-httpx==0.27.0  # Pin to a compatible version before the proxies parameter was removed
+openai==0.28.1  # Using an older version that doesn't have the httpx proxies issue
 azure-functions==1.17.0
 python-dateutil==2.8.2
 requests==2.31.0

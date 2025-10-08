@@ -11,7 +11,7 @@ if os.path.exists(site_packages_path) and site_packages_path not in sys.path:
     sys.path.append(site_packages_path)
 
 try:
-    from openai import AzureOpenAI
+    import openai
 except ImportError:
     logging.error("Failed to import OpenAI. Path: %s", sys.path)
     raise
@@ -80,13 +80,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except ImportError:
             logging.info("httpx not directly importable")
         
-        # Create Azure OpenAI client using the new SDK
-        # Using the default HTTP client now that we've pinned httpx to a compatible version
-        client = AzureOpenAI(
-            api_key=os.environ["OPENAI_API_KEY"],
-            api_version=os.environ["OPENAI_API_VERSION"],
-            azure_endpoint=os.environ["OPENAI_ENDPOINT"]
-        )
+        # Configure openai with Azure settings (using the older API style for version 0.28.1)
+        openai.api_type = "azure"
+        openai.api_key = os.environ["OPENAI_API_KEY"]
+        openai.api_version = os.environ["OPENAI_API_VERSION"]
+        openai.api_base = os.environ["OPENAI_ENDPOINT"]
         
         description = req_body['description']
         
@@ -102,13 +100,15 @@ Category:
 """
         try:
             deployment_id = os.environ.get("OPENAI_MODEL", "gpt-4o")
-            response = client.chat.completions.create(
-                model=deployment_id,
+            # Using the older API style for version 0.28.1
+            response = openai.ChatCompletion.create(
+                engine=deployment_id,  # In 0.28.1 for Azure, use 'engine' instead of 'model'
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=20,
                 temperature=0
             )
-            category = response.choices[0].message.content.strip()
+            # In 0.28.1, message content is accessed differently
+            category = response.choices[0].message['content'].strip()
         except Exception as e:
             logging.error(f"Error classifying ticket: {str(e)}")
             logging.error(f"Error type: {type(e).__name__}")
