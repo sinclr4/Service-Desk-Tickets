@@ -30,6 +30,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     modules_to_try = [
         'azure.functions', 
         'openai', 
+        'httpx',
         'requests', 
         'json', 
         'os',
@@ -49,10 +50,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except AttributeError as e:
             results[module_name] = f"Success (no __version__)"
 
+    # Test httpx Client with proxies parameter
+    httpx_proxies_test = "Not tested"
+    try:
+        import httpx
+        try:
+            # Try to create a client with proxies parameter
+            client = httpx.Client(proxies=None)
+            httpx_proxies_test = "Supports proxies=None"
+        except TypeError as e:
+            httpx_proxies_test = f"Error: {str(e)}"
+    except ImportError:
+        httpx_proxies_test = "httpx not available"
+    
     response_body = {
         "status": "System Check",
         "python_version": sys.version,
-        "module_checks": results
+        "module_checks": results,
+        "httpx_proxies_test": httpx_proxies_test
     }
     
     import json

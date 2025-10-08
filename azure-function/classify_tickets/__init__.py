@@ -70,19 +70,26 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
         # Disable proxies by setting environment variables
         os.environ['no_proxy'] = '*'
         
+        # Log httpx version if available
+        try:
+            import httpx
+            logging.info(f"httpx version: {httpx.__version__}")
+        except ImportError:
+            logging.info("httpx not directly importable")
+        
         # Create Azure OpenAI client using the new SDK
         api_key = os.environ["OPENAI_API_KEY"]
         api_version = os.environ["OPENAI_API_VERSION"]
         azure_endpoint = os.environ["OPENAI_ENDPOINT"]
         
-        # Initialize client with default_headers to avoid proxies issue
-        # Removing the custom HTTP client since it's causing issues
+        # Initialize client with default_headers but no other customization
+        # Using the default HTTP client now that we've pinned httpx to a compatible version
         try:
+            # Remove default_headers to simplify the initialization
             client = AzureOpenAI(
                 api_key=api_key,
                 api_version=api_version,
-                azure_endpoint=azure_endpoint,
-                default_headers={"Accept": "application/json"}
+                azure_endpoint=azure_endpoint
             )
             # Test the client with a simple API call
             logging.info("Testing OpenAI client initialization...")
