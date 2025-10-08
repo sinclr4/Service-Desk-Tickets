@@ -65,18 +65,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info(f"Endpoint: {os.environ.get('OPENAI_ENDPOINT')}")
         logging.info(f"Model: {os.environ.get('OPENAI_MODEL')}")
         
+        # Check for any proxy environment variables
+        proxy_vars = [var for var in os.environ if 'proxy' in var.lower()]
+        if proxy_vars:
+            logging.info(f"Found proxy environment variables: {', '.join(proxy_vars)}")
+        
+        # Disable proxies by setting environment variables
+        os.environ['no_proxy'] = '*'
+        
         # Create Azure OpenAI client using the new SDK
-        import httpx
-        
-        # Create a custom HTTP client with no proxies
-        http_client = httpx.Client(proxies=None)
-        
         client = AzureOpenAI(
             api_key=os.environ["OPENAI_API_KEY"],
             api_version=os.environ["OPENAI_API_VERSION"],
             azure_endpoint=os.environ["OPENAI_ENDPOINT"],
-            default_headers={"Accept": "application/json"},
-            http_client=http_client
+            default_headers={"Accept": "application/json"}
         )
         
         description = req_body['description']

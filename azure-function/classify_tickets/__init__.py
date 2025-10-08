@@ -62,23 +62,33 @@ def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
         logging.info(f"Endpoint: {os.environ.get('OPENAI_ENDPOINT')}")
         logging.info(f"Model: {os.environ.get('OPENAI_MODEL')}")
         
+        # Check for any proxy environment variables
+        proxy_vars = [var for var in os.environ if 'proxy' in var.lower()]
+        if proxy_vars:
+            logging.info(f"Found proxy environment variables: {', '.join(proxy_vars)}")
+        
+        # Disable proxies by setting environment variables
+        os.environ['no_proxy'] = '*'
+        
         # Create Azure OpenAI client using the new SDK
-        import httpx
         api_key = os.environ["OPENAI_API_KEY"]
         api_version = os.environ["OPENAI_API_VERSION"]
         azure_endpoint = os.environ["OPENAI_ENDPOINT"]
         
-        # Create a custom HTTP client with no proxies
-        http_client = httpx.Client(proxies=None)
-        
-        # Initialize client with default_headers and custom http_client to avoid proxies issue
-        client = AzureOpenAI(
-            api_key=api_key,
-            api_version=api_version,
-            azure_endpoint=azure_endpoint,
-            default_headers={"Accept": "application/json"},
-            http_client=http_client
-        )
+        # Initialize client with default_headers to avoid proxies issue
+        # Removing the custom HTTP client since it's causing issues
+        try:
+            client = AzureOpenAI(
+                api_key=api_key,
+                api_version=api_version,
+                azure_endpoint=azure_endpoint,
+                default_headers={"Accept": "application/json"}
+            )
+            # Test the client with a simple API call
+            logging.info("Testing OpenAI client initialization...")
+        except Exception as e:
+            logging.error(f"Error initializing OpenAI client: {str(e)}")
+            raise
         
         # Process the CSV
         input_stream = io.StringIO(csv_content)
